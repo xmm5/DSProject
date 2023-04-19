@@ -1,0 +1,10 @@
+data*/
+docs/
+dumps/
+venv/
+.idea/
+
+**/__pycache__/
+
+dump-project.sh
+
