@@ -3,6 +3,7 @@ import os
 import pandas as pd
 
 from bs4 import BeautifulSoup
+
 from src.parser.TextTransformer import TextTransformer
 
 
@@ -53,8 +54,8 @@ class DataParser:
                         item['url'] = f'https://hh.ru/resume/{resume_id}?customDomain=1'  # Регион Москва
                         item['title'] = ''
                         item['title_tok'] = ''
+                        item['experience'] = ''
                         item['experience_tok'] = ''
-                        item['skills_tok'] = ''
 
                         try:
                             # Название резюме.
@@ -65,17 +66,18 @@ class DataParser:
                                 item['title'] = text
                                 item['title_tok'] = self._text_transformer.transform(text)
                             else:
-                                print(' ' * 4 + '[!!] название резюме: is empty or not found')
+                                print('[!!] название резюме: is empty or not found')
 
                             # Опыт работы.
                             result = resume_parser.select(
                                 selector='div[data-qa="resume-block-experience"] div[data-qa="resume-block-experience-description"]')
                             if result:
                                 # Объединить весь опыт работы в одну строку.
-                                text = ' '.join(s.text.strip() for s in result)
+                                text = '\n'.join(s.text.strip() for s in result)
+                                item['experience'] = text
                                 item['experience_tok'] = self._text_transformer.transform(text)
                             else:
-                                print(' ' * 4 + '[!!] опыт работы: is empty or not found')
+                                print('[!!] опыт работы: is empty or not found')
 
                             # Обо мне.
                             result = resume_parser.select(
@@ -83,33 +85,38 @@ class DataParser:
                             if result:
                                 text = result[0].text.strip()
                                 if text:
-                                    # Если значение 'experience_tok' есть, то
+                                    # Если значение 'experience' либо 'experience_tok' есть, то
                                     # добавить к нему еще блок данных иначе нужно указать значение.
+
+                                    if item['experience']:
+                                        item['experience'] += f'\n{text}'
+                                    else:
+                                        item['experience'] = text
+
                                     if item['experience_tok']:
                                         item['experience_tok'] += ' '
                                         item['experience_tok'] += self._text_transformer.transform(text)
                                     else:
                                         item['experience_tok'] = self._text_transformer.transform(text)
                             else:
-                                print(' ' * 4 + '[!!] обо мне: is empty or not found')
+                                print('[!!] обо мне: is empty or not found')
 
-                            # Ключевые навыки.
-                            result = resume_parser.select(
-                                selector='div[data-qa="skills-table"] span[data-qa="bloko-tag__text"]')
-                            if result:
-                                text = ' '.join(s.text.strip() for s in result)
-                                item['skills_tok'] = self._text_transformer.transform(text)
-                            else:
-                                print(' ' * 4 + '[!!] ключевые навыки: is empty or not found')
+                            # Добавить запись.
+                            data.append(item)
+
+                            # Ограничение данных добавляемых в DataFrame.
+                            counter += 1
+
+                            if counter > 0 and counter % 250 == 0:
+                                if limit:
+                                    print(f'{counter} resume processed of {limit}')
+                                else:
+                                    print(f'{counter} resume processed')
+
+                            if limit and (counter >= limit):
+                                return pd.json_normalize(data)
                         except AttributeError as err:
                             print("err: " + str(err))
-
-                        # Добавить запись.
-                        data.append(item)
-
-                        counter += 1
-                        if limit and counter >= limit:
-                            return pd.json_normalize(data)
 
         # Формируем pandas DataFrame.
         return pd.json_normalize(data)
@@ -133,10 +140,8 @@ class DataParser:
                         item['url'] = vacancy['alternate_url'] + '?customDomain=1'  # Регион Москва
                         item['title'] = vacancy['name']
                         item['description'] = vacancy['description']
-                        item['skills'] = ','.join([skill['name'].strip() for skill in vacancy['key_skills']])
                         item['title_tok'] = self._text_transformer.transform(vacancy['name'])
                         item['description_tok'] = self._text_transformer.transform(vacancy['description'])
-                        item['skills_tok'] = self._text_transformer.transform(item['skills'])
 
                         if 'professional_roles' in vacancy:
                             professional_roles = [int(role['id']) for role in vacancy['professional_roles']]
@@ -147,8 +152,16 @@ class DataParser:
                         # Добавить запись.
                         data.append(item)
 
+                        # Ограничение данных добавляемых в DataFrame.
                         counter += 1
-                        if limit and counter >= limit:
+
+                        if counter > 0 and counter % 250 == 0:
+                            if limit:
+                                print(f'{counter} vacancy processed of {limit}')
+                            else:
+                                print(f'{counter} vacancy processed')
+
+                        if limit and (counter >= limit):
                             return pd.json_normalize(data)
 
         # Формируем pandas DataFrame.

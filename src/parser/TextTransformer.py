@@ -2,11 +2,11 @@ import os
 import re
 import nltk
 
+from typing import Union
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.snowball import SnowballStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.downloader import Downloader
-
 from pymorphy2 import MorphAnalyzer
 
 
@@ -56,11 +56,11 @@ class TextTransformer:
         self._stopwords_en = nltk.corpus.stopwords.words('english')
 
         self._re_html_character_entities = re.compile(r'&(?:(?:[a-z0-9]+|#[0-9]+|#x[a-f0-9]+);)', flags=flags)
-        self._re_html_tags = re.compile(r'<[^>]+>', flags=flags)
+        self._re_html_tags = re.compile(r'<[^>]+>', flags=flags)  # r'<([^>]+)>'
         self._re_html_link = re.compile(r'https?://\S+', flags=flags)
         self._re_space = re.compile(r'[\s\t]{1,}', flags=flags)
 
-    def transform(self, text: str) -> str:
+    def transform(self, text: str, split: bool = False) -> Union[str, list]:  # str|list in Python 3.10
         """
         Метод фильтрует и преобразовываем входной текст.
         На выходе строка токенов.
@@ -77,20 +77,23 @@ class TextTransformer:
         # Заменить несколько пробелов одним.
         text = self._re_space.sub(' ', text)
 
+        max_token_length = 1
+
         # Разделить текст на токены.
         tokens_filtered = []
         for token in self._tk.tokenize(text):
             w = token.strip()
-            # Фильтрация русских и английских стоп-слов.
-            if w not in self._stopwords_ru and w not in self._stopwords_en:
+            # Фильтрация русских и английских стоп-слов плюс ограничение на длину токена.
+            if w not in self._stopwords_ru and w not in self._stopwords_en and len(w) > max_token_length:
                 # Лемматизация (привести русские и английские слова к нормальной форме слова).
                 w = self._lemmatizer_ru.parse(w)[0].normal_form
                 w = self._lemmatizer_en.lemmatize(w)
                 # Стемминг (выделить основу слова).
                 w = self._stemmer_ru.stem(w)
                 w = self._stemmer_en.stem(w)
-                # Размер токена два и больше символов.
-                if len(w) > 1:
-                    tokens_filtered.append(w)
+                tokens_filtered.append(w)
+
+        if split:
+            return tokens_filtered
 
         return ' '.join(tokens_filtered)
