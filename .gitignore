@@ -6,5 +6,6 @@ venv/
 
 **/__pycache__/
 
-dump-project.sh
+*.sh
+*.json
 

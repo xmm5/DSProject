@@ -20,7 +20,7 @@ class Searcher:
             ('description', 0.9),
         ]
 
-        self._text_transformer = TextTransformer()
+        self._text_transformer = TextTransformer(working_dir=working_dir)
         self._max_features = 20000
 
     @staticmethod
@@ -51,6 +51,12 @@ class Searcher:
         # Напечатать топ-10 ваканисй.
         print(df[fields][df['score'] > 0.0].head(n_top))
 
+    def _get_n_top(self, df: pd.DataFrame, n_top: int = 10) -> pd.DataFrame:
+        df['score'] = df.apply(lambda x: Searcher._calc_score(x, self._fields), axis=1)
+        df.sort_values(by=['score'], ascending=False, inplace=True)
+        fields = ['id', 'title', 'url', 'score']
+        return df[fields][df['score'] > 0.0].iloc[:n_top]
+
     def bow(self, vacancy_df: pd.DataFrame, query: str) -> None:
         """
         Модель "Bag of Words" в целом работает хорошо, но
@@ -64,14 +70,22 @@ class Searcher:
         for field, _ in self._fields:
             tm_start = time.time()
 
-            # Подготовка данных для обучения модели.
-            corpus = df[f'{field}_tok'].tolist()
             # Инициализация и обучение модели.
             model = BoWModel(ngram_range=(1, 2), max_features=20000)
-            model.fit(corpus)
+
+            # NOTE: При первом запуске происходит создание и кэширование модели (занимает некоторое время).
+            file_path = f'{self._working_dir}/data/model/bow/{field}.model'
+            if not os.path.isfile(file_path):
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                # Подготовка данных для обучения модели.
+                corpus = df[f'{field}_tok'].tolist()
+                model.fit(corpus)
+                model.save(file_path)
+            else:
+                model.load(file_path)
 
             # Подготовка запроса.
-            target = model.transform(query)
+            target = model.transform(self._text_transformer.transform(query, split=False))
 
             # Вычисление score для столбца field.
             df[f'{field}_score'] = model.get_similarity(target)
@@ -82,6 +96,27 @@ class Searcher:
         print()
 
         self._print_stat(df)
+
+    def bow_api(self, vacancy_df: pd.DataFrame, query: str, n_top: int = 10) -> pd.DataFrame:
+        df = vacancy_df.copy()
+
+        for field, _ in self._fields:
+            tm_start = time.time()
+            model = BoWModel(ngram_range=(1, 2), max_features=20000)
+            file_path = f'{self._working_dir}/data/model/bow/{field}.model'
+            if not os.path.isfile(file_path):
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                corpus = df[f'{field}_tok'].tolist()
+                model.fit(corpus)
+                model.save(file_path)
+            else:
+                model.load(file_path)
+            target = model.transform(self._text_transformer.transform(query, split=False))
+            df[f'{field}_score'] = model.get_similarity(target)
+            tm_elapsed = time.time() - tm_start
+            print(f'time: {tm_elapsed:.06f} for "{field}_tok"')
+
+        return self._get_n_top(df, n_top=n_top)
 
     def tfidf(self, vacancy_df: pd.DataFrame, query: str) -> None:
         """
@@ -96,14 +131,22 @@ class Searcher:
         for field, _ in self._fields:
             tm_start = time.time()
 
-            # Подготовка данных для обучения модели.
-            corpus = df[f'{field}_tok'].tolist()
             # Инициализация и обучение модели.
             model = TfidfModel(smooth_idf=True, use_idf=True, ngram_range=(1, 2), max_features=20000)
-            model.fit(corpus)
+
+            # NOTE: При первом запуске происходит создание и кэширование модели (занимает некоторое время).
+            file_path = f'{self._working_dir}/data/model/tfidf/{field}.model'
+            if not os.path.isfile(file_path):
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                # Подготовка данных для обучения модели.
+                corpus = df[f'{field}_tok'].tolist()
+                model.fit(corpus)
+                model.save(file_path)
+            else:
+                model.load(file_path)
 
             # Подготовка запроса.
-            target = model.transform(query)
+            target = model.transform(self._text_transformer.transform(query, split=False))
 
             # Вычисление score для столбца field.
             df[f'{field}_score'] = model.get_similarity(target)
@@ -114,6 +157,27 @@ class Searcher:
         print()
 
         self._print_stat(df)
+
+    def tfidf_api(self, vacancy_df: pd.DataFrame, query: str, n_top: int = 10) -> pd.DataFrame:
+        df = vacancy_df.copy()
+
+        for field, _ in self._fields:
+            tm_start = time.time()
+            model = TfidfModel(smooth_idf=True, use_idf=True, ngram_range=(1, 2), max_features=20000)
+            file_path = f'{self._working_dir}/data/model/tfidf/{field}.model'
+            if not os.path.isfile(file_path):
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                corpus = df[f'{field}_tok'].tolist()
+                model.fit(corpus)
+                model.save(file_path)
+            else:
+                model.load(file_path)
+            target = model.transform(self._text_transformer.transform(query, split=False))
+            df[f'{field}_score'] = model.get_similarity(target)
+            tm_elapsed = time.time() - tm_start
+            print(f'time: {tm_elapsed:.06f} for "{field}_tok"')
+
+        return self._get_n_top(df, n_top=n_top)
 
     def w2v(self, vacancy_df: pd.DataFrame, query: str) -> None:
         """
@@ -132,8 +196,9 @@ class Searcher:
             model = W2VModel(vector_size=512, window=5, min_count=1, workers=8, epochs=100)
 
             # NOTE: При первом запуске происходит создание и кэширование модели (занимает некоторое время).
-            file_path = f'{self._working_dir}/data/{field}_w2v.model'
+            file_path = f'{self._working_dir}/data/model/w2v/{field}.model'
             if not os.path.isfile(file_path):
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 # Подготовка данных для обучения модели.
                 corpus = [w.split() for w in df[f'{field}_tok'].tolist()]
                 model.fit(corpus)
@@ -153,3 +218,24 @@ class Searcher:
         print()
 
         self._print_stat(df)
+
+    def w2v_api(self, vacancy_df: pd.DataFrame, query: str, n_top: int = 10) -> pd.DataFrame:
+        df = vacancy_df.copy()
+
+        for field, _ in self._fields:
+            tm_start = time.time()
+            model = W2VModel(vector_size=512, window=5, min_count=1, workers=8, epochs=100)
+            file_path = f'{self._working_dir}/data/model/w2v/{field}.model'
+            if not os.path.isfile(file_path):
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                corpus = [w.split() for w in df[f'{field}_tok'].tolist()]
+                model.fit(corpus)
+                model.save(file_path)
+            else:
+                model.load(file_path)
+            target = model.transform(self._text_transformer.transform(query, split=True))
+            df[f'{field}_score'] = model.get_similarity(target)
+            tm_elapsed = time.time() - tm_start
+            print(f'time: {tm_elapsed:.06f} for "{field}_tok"')
+
+        return self._get_n_top(df, n_top=n_top)

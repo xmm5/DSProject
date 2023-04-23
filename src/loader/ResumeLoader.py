@@ -9,7 +9,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 from src import Utils
-from src.HHApi import HHApi
+from src.api.HHApi import HHApi
 from src.loader.DataLoader import DataLoader
 
 

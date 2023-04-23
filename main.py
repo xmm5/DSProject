@@ -1,8 +1,8 @@
-from src import DSProject
+from src.DSProject import DSProject
 
 
 def main():
-    DSProject.run()
+    DSProject().run()
 
 
 if __name__ == '__main__':

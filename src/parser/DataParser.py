@@ -14,7 +14,7 @@ class DataParser:
 
     def __init__(self, working_dir: str, categories_file_path: str = None):
         self._working_dir = working_dir
-        self._text_transformer = TextTransformer(f'{working_dir}/data')
+        self._text_transformer = TextTransformer(working_dir=working_dir)
 
         # Загрузить категории вакансий если они есть.
         self._categories = None
@@ -55,7 +55,7 @@ class DataParser:
                         item['title'] = ''
                         item['title_tok'] = ''
                         item['experience'] = ''
-                        item['experience_tok'] = ''
+                        # item['experience_tok'] = ''
 
                         try:
                             # Название резюме.
@@ -75,7 +75,7 @@ class DataParser:
                                 # Объединить весь опыт работы в одну строку.
                                 text = '\n'.join(s.text.strip() for s in result)
                                 item['experience'] = text
-                                item['experience_tok'] = self._text_transformer.transform(text)
+                                # item['experience_tok'] = self._text_transformer.transform(text)
                             else:
                                 print('[!!] опыт работы: is empty or not found')
 
@@ -93,11 +93,11 @@ class DataParser:
                                     else:
                                         item['experience'] = text
 
-                                    if item['experience_tok']:
-                                        item['experience_tok'] += ' '
-                                        item['experience_tok'] += self._text_transformer.transform(text)
-                                    else:
-                                        item['experience_tok'] = self._text_transformer.transform(text)
+                                    # if item['experience_tok']:
+                                    #     item['experience_tok'] += ' '
+                                    #     item['experience_tok'] += self._text_transformer.transform(text)
+                                    # else:
+                                    #     item['experience_tok'] = self._text_transformer.transform(text)
                             else:
                                 print('[!!] обо мне: is empty or not found')
 
@@ -139,7 +139,7 @@ class DataParser:
                         item['id'] = vacancy['id']
                         item['url'] = vacancy['alternate_url'] + '?customDomain=1'  # Регион Москва
                         item['title'] = vacancy['name']
-                        item['description'] = vacancy['description']
+                        # item['description'] = vacancy['description']
                         item['title_tok'] = self._text_transformer.transform(vacancy['name'])
                         item['description_tok'] = self._text_transformer.transform(vacancy['description'])
 

@@ -1,4 +1,3 @@
-import pickle
 import numpy as np
 
 from gensim.models import Word2Vec, KeyedVectors
@@ -17,17 +16,15 @@ class W2VModel(BaseModel):
         self._model = Word2Vec(**kwargs)
         self._sparse_matrix = None
 
-    def save(self, file_path):
+    def save(self, file_path: str):
         self._model.save(file_path)
         self._model.wv.save(f'{file_path}_wv')
-        with open(f'{file_path}_sparse_matrix', mode='wb') as fw:
-            pickle.dump(self._sparse_matrix, fw)
+        super()._save(f'{file_path}_sparse_matrix', self._sparse_matrix)
 
-    def load(self, file_path):
+    def load(self, file_path: str):
         self._model = Word2Vec.load(file_path)
         self._model.wv = KeyedVectors.load(f'{file_path}_wv')
-        with open(f'{file_path}_sparse_matrix', mode='rb') as fr:
-            self._sparse_matrix = pickle.load(fr)
+        self._sparse_matrix = super()._load(f'{file_path}_sparse_matrix')
 
     def fit(self, corpus):
         self._model.build_vocab(corpus_iterable=corpus)

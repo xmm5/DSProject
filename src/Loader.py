@@ -3,26 +3,21 @@ import os
 import pickle
 import pandas as pd
 
-from src import HHSettings
-from src.HHApi import HHApi
+from src.api import HHSettings
+from src.api.HHApi import HHApi
 from src.loader.ResumeLoader import ResumeLoader
 from src.loader.VacancyLoader import VacancyLoader
 from src.parser.DataParser import DataParser
 
 
 class Loader:
-    def __init__(self, working_dir: str,
-                 vacancy_limit: int = 5000,
-                 resume_limit: int = 500):
+    def __init__(self, working_dir: str):
         """
         :param working_dir: Директория проекта.
-        :param vacancy_limit: Количество вакансий в DataFrame.
-        :param resume_limit: Количество резюме в DataFrame.
         """
+
         self._working_dir = working_dir
         self._hh = HHApi(user_agents_file=f'{working_dir}/data/etc/user-agents.txt')
-        self._vacancy_limit = vacancy_limit
-        self._resume_limit = resume_limit
 
     def _load_categories(self, categories_file_path: str) -> None:
         """
@@ -84,9 +79,13 @@ class Loader:
                 search_in_days=HHSettings.HH_SEARCH_IN_DAYS,
                 max_page=1)  # Скачиваем только первую страницу поисковой выдачи.
 
-    def parse(self) -> None:
+    def parse(self, vacancy_limit: int = 5000, resume_limit: int = 500) -> None:
         """
         Парсинг данных и подготовка датасета.
+
+        :param vacancy_limit: Количество вакансий в DataFrame.
+        :param resume_limit: Количество резюме в DataFrame.
+        :return:
         """
 
         categories_file_path = f'{self._working_dir}/data/categories.json'
@@ -99,13 +98,13 @@ class Loader:
         # Парсинг вакансий, формирование DataFrame и сохранение его на диск в формате pickle.
         file_path = f'{self._working_dir}/data/vacancy.pkl{pickle.HIGHEST_PROTOCOL}'
         if not os.path.isfile(file_path):
-            vacancy_df = parser.get_vacancy_dataframe(limit=self._vacancy_limit)
+            vacancy_df = parser.get_vacancy_dataframe(limit=vacancy_limit)
             vacancy_df.to_pickle(file_path)
 
         # Парсинг вакансий, формирование DataFrame и сохранение его на диск в формате pickle.
         file_path = f'{self._working_dir}/data/resume.pkl{pickle.HIGHEST_PROTOCOL}'
         if not os.path.isfile(file_path):
-            resume_df = parser.get_resume_dataframe(limit=self._resume_limit)
+            resume_df = parser.get_resume_dataframe(limit=resume_limit)
             resume_df.to_pickle(file_path)
 
     def get_vacancy_dataframe(self):

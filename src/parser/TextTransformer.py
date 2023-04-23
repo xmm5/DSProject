@@ -27,9 +27,9 @@ class TextTransformer:
         - cтемминг для русских и английских слов
     """
 
-    def __init__(self, base_dir: str = None):
+    def __init__(self, working_dir: str = None):
         # Скачать ресурсы nltk в директорию nltk_dir.
-        nltk_dir = f'{base_dir}/nltk' if base_dir else '/tmp/nltk'
+        nltk_dir = f'{working_dir}/data/nltk' if working_dir is not None else '/tmp/nltk'
         os.makedirs(nltk_dir, exist_ok=True)
         # Настройка путь для поиска ресурсы nltk.
         nltk.data.path.append(nltk_dir)
