@@ -193,7 +193,7 @@ class Searcher:
             tm_start = time.time()
 
             # Инициализация и обучение модели.
-            model = W2VModel(vector_size=512, window=5, min_count=1, workers=8, epochs=100)
+            model = W2VModel(vector_size=512, window=5, min_count=1, workers=8, epochs=150)
 
             # NOTE: При первом запуске происходит создание и кэширование модели (занимает некоторое время).
             file_path = f'{self._working_dir}/data/model/w2v/{field}.model'

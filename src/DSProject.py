@@ -27,30 +27,35 @@ class DSProject:
 
     def _on_parse(self):
         # Парсинг данных.
-        self._loader.parse(vacancy_limit=5000, resume_limit=250)
+        self._loader.parse(vacancy_limit=5000, resume_limit=500)
 
     def _on_search(self):
         # Поиск данных.
         self._resume_df = self._loader.get_resume_dataframe()
 
         # n = 3
-        # print(resume_df[['id', 'title']].iloc[n:n + 5])
+        # print(self._resume_df[['id', 'title']].iloc[n:n + 5])
 
         # Поиск данных, например, для резюме:
         # https://hh.ru/resume/db0fd37e0008c91dcb0039ed1f456f57395a47?customDomain=1
         resume = self._resume_df.loc[self._resume_df['id'] == 'db0fd37e0008c91dcb0039ed1f456f57395a47']
 
+        # Значение по умолчанию.
+        query = 'руководитель отдела подбора персонала'
+
         # Формируем запрос который состоит из названия резуме и опыт работы.
-        query = ' '.join((
-            resume.iloc[0]['title'],
-            resume.iloc[0]['experience'],
-        ))
+        print('-' * 80)
+        if not resume.empty:
+            query = ' '.join((
+                resume.iloc[0]['title'],
+                resume.iloc[0]['experience'],
+            ))
+            print(f'Ожидаем вакансии для резюме: "{resume.iloc[0]["title"]}"')
+        else:
+            print(f'Ожидаем вакансии для резюме: "{query}"')
 
         # Поиск вакансий при помощи различных моделей.
         self._vacancy_df = self._loader.get_vacancy_dataframe()
-
-        print('-' * 80)
-        print(f'Ожидаем вакансии для резюме: "{resume.iloc[0]["title"]}"')
 
         print('-' * 80)
         self._searcher.bow(vacancy_df=self._vacancy_df, query=query)

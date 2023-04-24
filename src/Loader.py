@@ -63,7 +63,7 @@ class Loader:
                 area=option['area'],
                 professional_role=option['roles'],
                 search_in_days=HHSettings.HH_SEARCH_IN_DAYS,
-                max_page=1)  # Скачиваем только первую страницу.
+                max_page=HHSettings.HH_VACANCY_MAX_PAGE)
 
         # Скачать резюме для указанных названий.
         resume_loader = ResumeLoader(
@@ -71,15 +71,14 @@ class Loader:
             working_dir=self._working_dir,
             threadpool_max_workers=4)
 
-        resume_title = ['экономист', 'аналитик', 'разработчик', 'инженер']
-        for title in resume_title:
+        for title in HHSettings.HH_RESUME_TITLES:
             resume_loader.load(
                 text=title,
                 area=HHSettings.HH_AREA,
                 search_in_days=HHSettings.HH_SEARCH_IN_DAYS,
-                max_page=1)  # Скачиваем только первую страницу поисковой выдачи.
+                max_page=HHSettings.HH_RESUME_MAX_PAGE)
 
-    def parse(self, vacancy_limit: int = 5000, resume_limit: int = 500) -> None:
+    def parse(self, vacancy_limit: int = 5000, resume_limit: int = 250) -> None:
         """
         Парсинг данных и подготовка датасета.
 

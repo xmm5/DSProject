@@ -46,7 +46,7 @@ class VacancyLoader(DataLoader):
         dt = datetime.now().strftime('%Y%m%d')
         page = 0
 
-        while True and ((not max_page) or (max_page and max_page >= (page + 1))):
+        while (max_page is None) or (max_page >= (page + 1)):
             file_path = f'{self._working_dir}/data/vacancy_pages/{dt}/vacancies_{page:06d}_{dt}.json'
             self._log(file_path)
 
@@ -93,6 +93,24 @@ class VacancyLoader(DataLoader):
             if (pages - page) == 0:
                 break
 
+    def _is_valid(self, vacancy: dict) -> bool:
+        """
+        Проверка вакансии на допустимость.
+
+        Вакансия должна содержать корректное описание, т.е. в описании вакансии
+        должны содержаться не пустые поля 'id', 'name', 'description'.
+        """
+
+        keys = ('id', 'name', 'description')
+        if all(key in vacancy for key in keys):
+            vacancy_id = vacancy['id']
+            for key in keys:
+                if not ((vacancy[key] is not None) and (len(vacancy[key].strip()) > 0)):
+                    self._log(f'Not valid "{key}" for vacancy ID={vacancy_id}')
+                    return False
+
+        return True
+
     def _load_vacancy(self, vacancy_id: str) -> None:
         """
         Загрузка вакансии.
@@ -113,16 +131,14 @@ class VacancyLoader(DataLoader):
 
                 # Проверка что скачали корректное описание вакансии, т.е.
                 # описание вакансии должно содержать поля ('id', 'name', 'description')
-                if all(key in vacancy for key in ('id', 'name', 'description')):
+                if self._is_valid(vacancy):
                     # Сохранить вакансию.
                     with open(file_path, mode='w', encoding='utf8') as fw:
                         fw.write(json.dumps(vacancy, ensure_ascii=False, indent=2))
 
                     # Добавить таймаут скачивания вакансий,
                     # иначе hh.ru не дает скачивать вакансии.
-                    time.sleep(Utils.get_random_sleep(1.0, 2.0))
-                else:
-                    self._log(f'Incorrect data received')
+                    time.sleep(Utils.get_random_sleep(1.0, 1.5))
             except Exception as e:
                 self._log(str(e))
 

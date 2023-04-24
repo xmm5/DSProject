@@ -55,8 +55,11 @@ class ResumeLoader(DataLoader):
                     if item[0] == 'page':
                         pages.add(int(item[1]))
 
-        # Вернуть максимальный номер страницы.
-        return max(pages)
+        try:
+            # Вернуть максимальный номер страницы.
+            return max(pages)
+        except:
+            return 0
 
     def load(self, text: str, max_page: int = None, **kwargs) -> None:
         """
@@ -73,7 +76,7 @@ class ResumeLoader(DataLoader):
         page = 0
         total_pages = -1
 
-        while True and ((not max_page) or (max_page and max_page >= (page + 1))):
+        while (max_page is None) or (max_page >= (page + 1)):
             html = ''
             file_path = f'{self._working_dir}/data/resume_pages/{dt}/rp_{page:06d}_{dt}.html'
             self._log(file_path)

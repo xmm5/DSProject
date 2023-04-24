@@ -2,10 +2,15 @@ data*/
 docs/
 dumps/
 venv/
+
 .idea/
+.ipynb_checkpoints/
 
 **/__pycache__/
 
-*.sh
+*.ipynb
 *.json
+*.pptx
+*.sh
+*.tar.gz
 
