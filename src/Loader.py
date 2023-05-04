@@ -106,10 +106,14 @@ class Loader:
             resume_df = parser.get_resume_dataframe(limit=resume_limit)
             resume_df.to_pickle(file_path)
 
-    def get_vacancy_dataframe(self):
+    def get_vacancy_dataframe(self) -> pd.DataFrame:
         file_path = f'{self._working_dir}/data/vacancy.pkl{pickle.HIGHEST_PROTOCOL}'
-        return pd.read_pickle(file_path)
+        if os.path.isfile(file_path):
+            return pd.read_pickle(file_path)
+        return pd.DataFrame()
 
-    def get_resume_dataframe(self):
+    def get_resume_dataframe(self) -> pd.DataFrame:
         file_path = f'{self._working_dir}/data/resume.pkl{pickle.HIGHEST_PROTOCOL}'
-        return pd.read_pickle(file_path)
+        if os.path.isfile(file_path):
+            return pd.read_pickle(file_path)
+        return pd.DataFrame()

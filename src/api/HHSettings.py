@@ -5,8 +5,9 @@
 # VACANCY
 # ==========
 
-HH_VACANCY_MAX_PAGE = None  # Скачиваем все страницы.
-# HH_VACANCY_MAX_PAGE = 1  # Скачиваем только первую страницу.
+# HH_VACANCY_MAX_PAGE = None  # Скачиваем все страницы.
+# HH_VACANCY_MAX_PAGE = 0  # Не скачиваем.
+HH_VACANCY_MAX_PAGE = 5  # Скачиваем только первые N cтраниц.
 
 # Город Москва.
 HH_AREA = 1
@@ -47,7 +48,8 @@ HH_PROFESSIONAL_INFO = [
 # ==========
 
 # HH_RESUME_MAX_PAGE = None  # Скачиваем все страницы поисковой выдачи.
-HH_RESUME_MAX_PAGE = 1  # Скачиваем только первую страницу поисковой выдачи.
+# HH_RESUME_MAX_PAGE = 0  # Не скачиваем.
+HH_RESUME_MAX_PAGE = 1  # Скачиваем только первые N cтраниц.
 
 # Названия резюме.
 HH_RESUME_TITLES = [

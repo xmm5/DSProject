@@ -10,7 +10,4 @@ venv/
 
 *.ipynb
 *.json
-*.pptx
-*.sh
-*.tar.gz
 
